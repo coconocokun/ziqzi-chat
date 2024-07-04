@@ -1,13 +1,19 @@
 import { db } from "@/firebase/config";
-import { onValue, ref } from "firebase/database";
+import { User } from "firebase/auth";
+import { onValue, push, ref } from "firebase/database";
 import { useEffect, useState } from "react";
+import MessageBox from "./MessageBox";
 
 type Chat = {
   author: string;
   msg: string;
 };
 
-export default function SimpleChat() {
+type Props = {
+  user: User;
+};
+
+export default function SimpleChat({ user }: Props) {
   const [messages, setMessages] = useState<Chat[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
@@ -22,7 +28,13 @@ export default function SimpleChat() {
   }, []);
 
   const sendMessage = () => {
-    // Send message to DB
+    if (newMessage.trim() != "") {
+      push(ref(db, "chat"), {
+        author: user.uid.slice(0, 5),
+        msg: newMessage,
+      });
+      setNewMessage("");
+    }
   };
 
   return (
@@ -30,7 +42,7 @@ export default function SimpleChat() {
       <div>
         <div>
           {messages.map((message, index) => (
-            <div key={index}>{message.msg}</div>
+            <MessageBox key={index} author={message.author} msg={message.msg} />
           ))}
         </div>
         <div>
